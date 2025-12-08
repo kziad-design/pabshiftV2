@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sistem Shift Perpustakaan UiTM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin:0; background:#4e2a7b; color:#fff; font-size:12px; }
+        #loginCard { max-width: 420px; margin: 60px auto; padding: 25px; background: white; border-radius: 12px; text-align: center; color:#000; }
+        #loginCard h2 { color: #4e2a7b; font-weight: bold; margin-bottom:20px; }
+        #loginCard img { width: 130px; margin-bottom: 20px; }
+        .loginInput { width: 85%; padding: 10px; border-radius: 8px; border: 1px solid #aaa; margin-bottom: 12px; font-size:12px; }
+        button { padding: 6px 10px; border: 0; border-radius: 6px; background: #4e2a7b; color: white; cursor: pointer; margin-right: 5px; font-size:12px; }
+        button.secondary { background:#444; }
+        header { text-align:center; padding:20px 10px; background:#a0a0a0; color:white; }
+        header img { height:70px; display:block; margin: 0 auto 10px auto; }
+        header h2 { margin:5px 0; font-size:18px; }
+        header div { font-size:12px; }
+        .wrap { max-width:1100px; margin:auto; padding:15px; display:flex; gap:20px; }
+        #leftPanel { width:300px; display:flex; flex-direction:column; gap:16px; }
+        #rightPanel { flex:1; }
+        .card { background:white; color:#000; padding:16px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); font-size:12px; }
+        input, select { padding:4px; width: calc(100% - 8px); margin-bottom:6px; font-size:12px; }
+        table { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+        th, td { border:1px solid #ddd; padding:6px; text-align:center; font-size:12px; }
+        th { background:#f7f7f7; }
+        .week0 { background:#e0f7fa; }
+        .week1 { background:#e8f5e9; }
+        .week2 { background:#fffde7; }
+        .week3 { background:#fff3e0; }
+        .week4 { background:#fce4ec; }
+        .week5 { background:#ede7f6; }
+        .cuti { font-weight:normal; color:#c40000; }
+        .extraFriday { background:#e0f7fa; font-size:12px; }
+        .femaleFriday { background:#ffcccc; color:#c40000; font-weight:bold; }
+        .frequency { margin-top:15px; font-weight:bold; font-size:12px; }
+        @media(max-width:900px){ .wrap { flex-direction:column; } #leftPanel { width:100%; } }
+    </style>
+</head>
+<body>
+
+<div id="loginCard">
+    <img src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png">
+    <h2>Sistem Shift<br>PERPUSTAKAAN AL-BUKKHARI<br>UiTM CAWANGAN PAHANG</h2>
+    <input id="username" class="loginInput" type="text" placeholder="Username"><br>
+    <input id="password" class="loginInput" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+</div>
+
+<div id="mainContent" style="display:none;">
+<header>
+    <img src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png">
+    <h2>Jadual Shift Perpustakaan</h2>
+    <div>Waktu Kerja Normal : 8:00 pg - 5.00 ptg | Waktu Rehat Shift : 2:00 ptg - 3.00 ptg</div>
+</header>
+
+<div class="wrap">
+    <div id="leftPanel">
+        <div class="card">
+            <button class="secondary" onclick="logout()">Logout</button>
+            <button class="secondary" onclick="openChangePassword()">Tukar Password</button>
+            <br><br>
+            <label>Bulan:</label>
+            <select id="bulan" style="width:45%"></select>
+            <br><br>
+            <label>Tahun:</label>
+            <input id="tahun" type="number" value="2025" style="width:45%" />
+            <br><br>
+            <button onclick="generateSchedule()">Jana</button>
+            <button class="secondary" onclick="resetSchedule()">Reset</button>
+            <button class="secondary" onclick="downloadPDF()">PDF</button>
+            <br><br>
+            <button class="secondary" onclick="addExtraFriday()">Jana Shift Jumaat Petang</button>
+        </div>
+
+        <div class="card">
+            <h3>Tambah Staf</h3>
+            <input id="stafName" type="text" placeholder="Nama staf">
+            <select id="stafGender">
+                <option value="M">Lelaki</option>
+                <option value="F">Wanita</option>
+            </select>
+            <button onclick="addStaf()">Tambah</button>
+            <button onclick="deleteStaf()">Padam</button>
+        </div>
+
+        <div class="card">
+            <h3>Kekerapan Staf</h3>
+            <div id="frequencyOutput" class="frequency"></div>
+        </div>
+    </div>
+
+    <div id="rightPanel">
+        <div class="card" id="scheduleCard">
+            <h3 id="jadualTitle"></h3>
+            <div id="scheduleOutput"></div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="passwordPopup" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6);">
+    <div style="background:white; max-width:350px; margin:140px auto; padding:20px; border-radius:10px; text-align:center;">
+        <h3>Tukar Password</h3>
+        <input id="oldPass" class="loginInput" type="password" placeholder="Password lama"><br>
+        <input id="newPass" class="loginInput" type="password" placeholder="Password baru"><br>
+        <button onclick="changePassword()">Simpan</button>
+        <button class="secondary" onclick="closeChangePassword()">Batal</button>
+    </div>
+</div>
+
+<script>
+// ================= LOGIN & USERS =================
+if(!localStorage.getItem("users")){
+    let defaultUsers = [
+        {username:"admin", password:"12345", role:"admin"},
+        {username:"staf1", password:"staf123", role:"staff"}
+    ];
+    localStorage.setItem("users", JSON.stringify(defaultUsers));
+}
+let currentUser=null;
+function getUsers(){ return JSON.parse(localStorage.getItem("users")); }
+function login(){
+    let u=document.getElementById("username").value.trim();
+    let p=document.getElementById("password").value.trim();
+    let users=getUsers();
+    let found=users.find(x=>x.username===u && x.password===p);
+    if(found){ 
+        currentUser=found; 
+        document.getElementById("loginCard").style.display="none"; 
+        document.getElementById("mainContent").style.display="block"; 
+        initApp(); 
+    } else{ 
+        alert("Username atau password salah!"); 
+    }
+}
+function logout(){ 
+    currentUser=null; 
+    document.getElementById("mainContent").style.display="none"; 
+    document.getElementById("loginCard").style.display="block"; 
+    document.getElementById("username").value=""; 
+    document.getElementById("password").value=""; 
+}
+// ================= PASSWORD =================
+function openChangePassword(){ document.getElementById("passwordPopup").style.display="block"; }
+function closeChangePassword(){ document.getElementById("passwordPopup").style.display="none"; }
+function changePassword(){
+    let oldP=document.getElementById("oldPass").value;
+    let newP=document.getElementById("newPass").value;
+    if(!currentUser){ alert("Error"); return; }
+    if(oldP!==currentUser.password){ alert("Password lama tidak betul!"); return; }
+    if(newP.trim()===""){ alert("Password baru tidak boleh kosong."); return; }
+    currentUser.password=newP.trim();
+    let users=getUsers();
+    let idx=users.findIndex(x=>x.username===currentUser.username);
+    users[idx]=currentUser;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Password berjaya ditukar!"); closeChangePassword();
+}
+
+// ================= STAF =================
+let staf = [
+    { name:"Roshairi", gender:"M" },
+    { name:"Alias", gender:"M" },
+    { name:"Fadhil", gender:"M" },
+    { name:"Saidi", gender:"M" },
+    { name:"Khairul Ziad", gender:"M" },
+    { name:"Nasir", gender:"M" },
+    { name:"Zainudin", gender:"M" },
+    { name:"Ibrahim", gender:"M" },
+    { name:"Hasmadi", gender:"M" },
+    { name:"Sabariah", gender:"F" },
+    { name:"Azliza", gender:"F" },
+    { name:"Suhaina", gender:"F" },
+    { name:"W.Rozita", gender:"F" },
+];
+
+// ================= SCHEDULE =================
+let schedule={};
+let freqHariBiasa={}, freqJumaat={}, freqExtraFriday={}, rotateJumaat=0;
+const hariNama=["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+const bulanNama=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
+const colors=["week0","week1","week2","week3","week4","week5"];
+
+// ================= INIT =================
+function initApp(){
+    const bulanSel=document.getElementById("bulan");
+    bulanSel.innerHTML="";
+    for(let i=0;i<12;i++){ 
+        let o=document.createElement("option"); 
+        o.value=i+1; 
+        o.textContent=bulanNama[i]; 
+        bulanSel.appendChild(o); 
+    }
+    bulanSel.value = new Date().getMonth()+1;
+    generateSchedule();
+}
+
+// ================= SHUFFLE =================
+function shuffle(a){ 
+    for(let i=a.length-1;i>0;i--){ 
+        let j=Math.floor(Math.random()*(i+1)); 
+        [a[i],a[j]]=[a[j],a[i]]; 
+    } 
+}
+
+// ================= GENERATE SCHEDULE =================
+function generateSchedule(){
+    schedule={}; rotateJumaat=0; freqHariBiasa={}; freqJumaat={}; freqExtraFriday={};
+
+    let bulan=parseInt(document.getElementById("bulan").value);
+    let tahun=parseInt(document.getElementById("tahun").value);
+    let lastDay=new Date(tahun,bulan,0).getDate();
+
+    let semua = staf.map(s=>s.name);
+    semua.forEach(n=>freqHariBiasa[n]=0);
+    staf.filter(s=>s.gender==="F").forEach(w=>freqJumaat[w]=0);
+    staf.forEach(s=>freqExtraFriday[s.name]=0);
+
+    // Hari biasa Isnin-Khamis
+    let hariBiasaList=[];
+    for(let d=1; d<=lastDay; d++){
+        let dt=new Date(tahun,bulan-1,d);
+        if(dt.getDay()>=1 && dt.getDay()<=4) hariBiasaList.push({d:d, dow:dt.getDay(), week:Math.ceil(d/7)});
+    }
+
+    shuffle(semua);
+    let weekNum=0;
+    for(let h of hariBiasaList){
+        let key=`${tahun}-${bulan}-${h.d}`;
+        if(h.dow===1) weekNum++;
+        let sorted=semua.slice().sort((a,b)=>freqHariBiasa[a]-freqHariBiasa[b]);
+        let selected=[];
+        for(let s of sorted){ if(selected.length>=2) break; selected.push(s); }
+        schedule[key]={y:tahun,m:bulan,d:h.d,day:h.dow,shift:selected.slice(),origShift:selected.slice(),cuti:"",week:weekNum,masa:"1:00 ptg – 2:00 ptg / 5:00 ptg - 5:50 ptg"};
+        selected.forEach(s=>freqHariBiasa[s]++);
+    }
+
+    // Jumaat biasa 1 wanita
+    let wanita = staf.filter(s=>s.gender==="F").map(s=>s.name);
+    shuffle(wanita);
+    weekNum=0;
+    for(let d=1; d<=lastDay; d++){
+        let dt=new Date(tahun,bulan-1,d);
+        if(dt.getDay()!==5) continue;
+        weekNum++;
+        let w = wanita[rotateJumaat % wanita.length]; rotateJumaat++;
+        let key=`${tahun}-${bulan}-${d}`;
+        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:[w],origShift:[w],cuti:"",week:weekNum,masa:"12:15 tgh – 3:00 ptg"};
+        freqJumaat[w]++;
+    }
+
+    renderSchedule();
+}
+
+// ================= ADD EXTRA FRIDAY =================
+function addExtraFriday(){
+    let bulan=parseInt(document.getElementById("bulan").value);
+    let tahun=parseInt(document.getElementById("tahun").value);
+    let lastDay=new Date(tahun,bulan,0).getDate();
+
+    let weekNum=0;
+    let semua = staf.map(s=>s.name);
+
+    for(let d=1; d<=lastDay; d++){
+        let dt=new Date(tahun,bulan-1,d);
+        if(dt.getDay()!==5) continue;
+        weekNum++;
+
+        let khamis = new Date(tahun,bulan-1,d-1);
+        let khamisKey = `${tahun}-${bulan}-${d-1}`;
+        let khamisShift = (schedule[khamisKey] && schedule[khamisKey].shift) ? schedule[khamisKey].shift : [];
+
+        // Pilih 2 staf untuk extra Friday tanpa ulang staf dari Khamis
+        let calon = semua.filter(n=>!khamisShift.includes(n));
+        calon.sort((a,b)=>freqExtraFriday[a]-freqExtraFriday[b]);
+        let selected = calon.slice(0,2);
+        selected.forEach(s=>freqExtraFriday[s]++);
+
+        let key=`${tahun}-${bulan}-${d}-extra`;
+        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:selected,origShift:selected.slice(),cuti:"",week:weekNum,masa:"2:45 ptg – 5:50 ptg"};
+    }
+
+    renderSchedule();
+}
+
+// ================= EDIT CUTI =================
+function editCuti(key){
+    let text=prompt("Masukkan cuti (kosong untuk batal):",schedule[key].cuti||"");
+    if(text===null) return;
+    let trimmed=text.trim();
+    let before = schedule[key].shift.slice();
+    schedule[key].cuti=trimmed;
+    if(trimmed){ schedule[key].shift=[]; } 
+    else { schedule[key].shift=schedule[key].origShift.slice(); }
+    updateFrequencyByDay(key,before,schedule[key].shift);
+    renderSchedule();
+}
+function updateFrequencyByDay(key, oldList, newList){
+    let s = schedule[key];
+    if(s.day===5 && !key.includes("extra")){ oldList.forEach(n=>freqJumaat[n]--); newList.forEach(n=>freqJumaat[n]++); return; }
+    if(s.day===5 && key.includes("extra")){ oldList.forEach(n=>freqExtraFriday[n]--); newList.forEach(n=>freqExtraFriday[n]++); return; }
+    oldList.forEach(n=>freqHariBiasa[n]--); newList.forEach(n=>freqHariBiasa[n]++);
+}
+
+// ================= RENDER SCHEDULE =================
+function renderSchedule(){
+    let keys=Object.keys(schedule).sort((a,b)=>schedule[a].d - schedule[b].d);
+    let html=`<table><tr><th>Hari / Tarikh</th><th>Shift</th><th>Nama Staf</th></tr>`;
+    keys.forEach(k=>{
+        let s=schedule[k];
+        let bgClass=colors[s.week%colors.length];
+        let extraClass="", styleTxt="";
+        if(k.includes("extra")) extraClass="extraFriday";
+        if(s.day===5 && !k.includes("extra")) extraClass="femaleFriday";
+        let show = s.cuti ? `<span class='cuti'>${s.cuti}</span>` : s.shift.join(" & ");
+        html+=`<tr class="${bgClass} ${extraClass}"><td>${hariNama[s.day]} (${s.d}/${s.m}/${s.y})</td><td>${s.masa}</td><td style="cursor:pointer;${styleTxt}" onclick="editCuti('${k}')">${show}</td></tr>`;
+    });
+    html+=`</table>`;
+    document.getElementById("scheduleOutput").innerHTML=html;
+    updateFrequencyPanel();
+}
+
+// ================= FREQUENCY =================
+function updateFrequencyPanel(){
+    let f="";
+    f+=`<strong>Hari Biasa:</strong><br>`; for(let n in freqHariBiasa){ f+=`${n}: ${freqHariBiasa[n]} kali<br>`; }
+    f+=`<br><strong>Jumaat Biasa (Wanita):</strong><br>`; for(let n in freqJumaat){ f+=`${n}: ${freqJumaat[n]} kali<br>`; }
+    f+=`<br><strong>Jumaat Tambahan:</strong><br>`; for(let n in freqExtraFriday){ f+=`${n}: ${freqExtraFriday[n]} kali<br>`; }
+    document.getElementById("frequencyOutput").innerHTML=f;
+}
+// ================= PDF =================
+async function downloadPDF(){
+    const el = document.getElementById("scheduleCard");
+
+    // Tambah elemen header untuk PDF dengan logo dan tulisan
+    const pdfHeader = document.createElement("div");
+    pdfHeader.style.textAlign="center";
+    pdfHeader.style.marginBottom="15px";
+
+    const logo = document.createElement("img");
+    logo.src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png";
+    logo.style.height="80px";
+    logo.style.display="block";
+    logo.style.margin="0 auto 10px auto";
+    pdfHeader.appendChild(logo);
+
+    const title1 = document.createElement("div");
+    title1.style.fontWeight="bold";
+    title1.style.fontSize="16px";
+    title1.innerText="Jadual Shift Perpustakaan";
+    pdfHeader.appendChild(title1);
+    
+    const title2 = document.createElement("div");
+    title2.style.fontSize="14px";
+    title2.innerText="Waktu Kerja Normal : 8:00 pg - 5.00 ptg | Waktu Rehat Shift  : 2:00 ptg - 3.00 ptg";
+    pdfHeader.appendChild(title2);
+
+    // Prepend header ke dalam scheduleCard sementara
+    el.prepend(pdfHeader);
+
+    // Gunakan html2canvas untuk tangkap scheduleCard
+    await html2canvas(el, { scale:2 }).then(canvas=>{
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jspdf.jsPDF("p","pt","a4");
+        const pdfW = pdf.internal.pageSize.getWidth();
+        const pdfH = pdf.internal.pageSize.getHeight();
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const ratio = Math.min(pdfW/imgW, pdfH/imgH);
+        pdf.addImage(imgData,'PNG',0,0,imgW*ratio,imgH*ratio);
+        const bulan = bulanNama[document.getElementById("bulan").value-1];
+        const tahun = document.getElementById("tahun").value;
+        pdf.save(`Jadual_Shift_${bulan}_${tahun}.pdf`);
+    });
+
+    // Buang header sementara selepas generate PDF
+    pdfHeader.remove();
+}
+
+// ================= STAF =================
+function addStaf(){
+    let n=document.getElementById("stafName").value.trim();
+    let g=document.getElementById("stafGender").value;
+    if(n===""){ alert("Nama kosong!"); return; }
+    staf.push({name:n,gender:g});
+    alert("Staf ditambah!");
+}
+function deleteStaf(){
+    let n=document.getElementById("stafName").value.trim();
+    if(n===""){ alert("Masukkan nama!"); return; }
+    staf = staf.filter(s=>s.name!==n);
+    alert("Staf dipadam!");
+}
+
+
+// ================= RESET SCHEDULE =================
+function resetSchedule(){
+    if(!confirm("Betul nak reset jadual?")) return;
+    schedule={}; freqHariBiasa={}; freqJumaat={}; freqExtraFriday={};
+    renderSchedule();
+}
+
+
+</script>
+
+</body>
+</html>
