@@ -331,70 +331,82 @@ function updateFrequencyPanel(){
     f+=`<br><strong>Jumaat Tambahan:</strong><br>`; for(let n in freqExtraFriday){ f+=`${n}: ${freqExtraFriday[n]} kali<br>`; }
     document.getElementById("frequencyOutput").innerHTML=f;
 }
-// ================= PDF =================
+// ========== PDF ==========
 async function downloadPDF(){
-    const el = document.getElementById("scheduleCard");
+    try {
+        const tempWrapper = document.createElement("div");
+        tempWrapper.style.width="800px";
+        tempWrapper.style.margin="0 auto";
+        tempWrapper.style.padding="15px";
+        tempWrapper.style.background="#fff";
+        tempWrapper.style.color="#000";
+        tempWrapper.style.fontFamily="Arial, sans-serif";
+        tempWrapper.style.fontSize="12px";
+        tempWrapper.style.textAlign="center";
 
-    // Tambah elemen header untuk PDF dengan logo dan tulisan
-    const pdfHeader = document.createElement("div");
-    pdfHeader.style.textAlign="center";
-    pdfHeader.style.marginBottom="15px";
+        // Header
+        const logo = document.createElement("img");
+        logo.src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png";
+        logo.style.height="80px";
+        logo.style.display="block";
+        logo.style.margin="0 auto 10px auto";
+        tempWrapper.appendChild(logo);
 
-    const logo = document.createElement("img");
-    logo.src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png";
-    logo.style.height="80px";
-    logo.style.display="block";
-    logo.style.margin="0 auto 10px auto";
-    pdfHeader.appendChild(logo);
-
-    const title1 = document.createElement("div");
-    title1.style.fontWeight="bold";
-    title1.style.fontSize="16px";
-    title1.innerText="Jadual Shift Perpustakaan";
-    pdfHeader.appendChild(title1);
-    
-    const title2 = document.createElement("div");
-    title2.style.fontSize="14px";
-    title2.innerText="Waktu Kerja Normal : 8:00 pg - 5.00 ptg | Waktu Rehat Shift  : 2:00 ptg - 3.00 ptg";
-    pdfHeader.appendChild(title2);
-
-    // Prepend header ke dalam scheduleCard sementara
-    el.prepend(pdfHeader);
-
-    // Gunakan html2canvas untuk tangkap scheduleCard
-    await html2canvas(el, { scale:2 }).then(canvas=>{
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jspdf.jsPDF("p","pt","a4");
-        const pdfW = pdf.internal.pageSize.getWidth();
-        const pdfH = pdf.internal.pageSize.getHeight();
-        const imgW = canvas.width;
-        const imgH = canvas.height;
-        const ratio = Math.min(pdfW/imgW, pdfH/imgH);
-        pdf.addImage(imgData,'PNG',0,0,imgW*ratio,imgH*ratio);
         const bulan = bulanNama[document.getElementById("bulan").value-1];
         const tahun = document.getElementById("tahun").value;
-        pdf.save(`Jadual_Shift_${bulan}_${tahun}.pdf`);
-    });
 
-    // Buang header sementara selepas generate PDF
-    pdfHeader.remove();
-}
+        const title1 = document.createElement("div");
+        title1.style.fontWeight="bold";
+        title1.style.fontSize="16px";
+        title1.style.marginBottom="5px";
+        title1.innerText=`Jadual Shift & OT - ${bulan} ${tahun}`;
+        tempWrapper.appendChild(title1);
 
-// ================= STAF =================
-function addStaf(){
-    let n=document.getElementById("stafName").value.trim();
-    let g=document.getElementById("stafGender").value;
-    if(n===""){ alert("Nama kosong!"); return; }
-    staf.push({name:n,gender:g});
-    alert("Staf ditambah!");
-}
-function deleteStaf(){
-    let n=document.getElementById("stafName").value.trim();
-    if(n===""){ alert("Masukkan nama!"); return; }
-    staf = staf.filter(s=>s.name!==n);
-    alert("Staf dipadam!");
-}
+        const title2 = document.createElement("div");
+        title2.style.fontSize="14px";
+        title2.style.marginBottom="20px";
+        title2.innerText="Waktu Kerja Normal : 8:00 pg - 5.00 ptg | Waktu Rehat Shift : 2:00 ptg - 3.00 ptg";
+        tempWrapper.appendChild(title2);
 
+        // Table wrapper
+        const shiftWrapper = document.createElement("div");
+        shiftWrapper.style.width="100%";
+        shiftWrapper.style.display="inline-block";
+        shiftWrapper.innerHTML=document.getElementById("scheduleOutput").innerHTML;
+
+        shiftWrapper.querySelectorAll("table").forEach(t=>{
+            t.style.width="90%";
+            t.style.margin="0 auto";
+            t.style.borderCollapse="collapse";
+            t.querySelectorAll("th, td").forEach(td=>{
+                td.style.padding="5px 10px";
+                td.style.border="1px solid #000";
+                td.style.fontSize="12px";
+            });
+        });
+
+        tempWrapper.appendChild(shiftWrapper);
+
+        document.body.appendChild(tempWrapper);
+        await html2canvas(tempWrapper, { scale:2 }).then(canvas=>{
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jspdf.jsPDF("p","pt","a4");
+            const pdfW = pdf.internal.pageSize.getWidth();
+            const pdfH = pdf.internal.pageSize.getHeight();
+            const imgW = canvas.width;
+            const imgH = canvas.height;
+            const ratio = Math.min(pdfW/imgW, pdfH/imgH);
+            const w = imgW*ratio;
+            const h = imgH*ratio;
+            pdf.addImage(imgData,"PNG", (pdfW-w)/2,20, w,h);
+            pdf.save(`Jadual_Shift_${bulan}_${tahun}.pdf`);
+        });
+        document.body.removeChild(tempWrapper);
+    } catch(e){ 
+        alert("Terjadi masalah semasa generate PDF. Sila cuba semula"); 
+        console.error(e);
+    }
+}
 
 // ================= RESET SCHEDULE =================
 function resetSchedule(){
