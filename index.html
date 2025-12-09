@@ -110,9 +110,8 @@
         <button class="secondary" onclick="closeChangePassword()">Batal</button>
     </div>
 </div>
-
 <script>
-// ================= LOGIN & USERS =================
+// ================= USERS & LOGIN =================
 if(!localStorage.getItem("users")){
     let defaultUsers = [
         {username:"admin", password:"12345", role:"admin"},
@@ -120,8 +119,10 @@ if(!localStorage.getItem("users")){
     ];
     localStorage.setItem("users", JSON.stringify(defaultUsers));
 }
+
 let currentUser=null;
 function getUsers(){ return JSON.parse(localStorage.getItem("users")); }
+
 function login(){
     let u=document.getElementById("username").value.trim();
     let p=document.getElementById("password").value.trim();
@@ -136,6 +137,7 @@ function login(){
         alert("Username atau password salah!"); 
     }
 }
+
 function logout(){ 
     currentUser=null; 
     document.getElementById("mainContent").style.display="none"; 
@@ -143,9 +145,11 @@ function logout(){
     document.getElementById("username").value=""; 
     document.getElementById("password").value=""; 
 }
+
 // ================= PASSWORD =================
 function openChangePassword(){ document.getElementById("passwordPopup").style.display="block"; }
 function closeChangePassword(){ document.getElementById("passwordPopup").style.display="none"; }
+
 function changePassword(){
     let oldP=document.getElementById("oldPass").value;
     let newP=document.getElementById("newPass").value;
@@ -157,7 +161,8 @@ function changePassword(){
     let idx=users.findIndex(x=>x.username===currentUser.username);
     users[idx]=currentUser;
     localStorage.setItem("users", JSON.stringify(users));
-    alert("Password berjaya ditukar!"); closeChangePassword();
+    alert("Password berjaya ditukar!"); 
+    closeChangePassword();
 }
 
 // ================= STAF =================
@@ -177,14 +182,41 @@ let staf = [
     { name:"W.Rozita", gender:"F" },
 ];
 
-// ================= SCHEDULE =================
-let schedule={};
-let freqHariBiasa={}, freqJumaat={}, freqExtraFriday={}, rotateJumaat=0;
-const hariNama=["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
-const bulanNama=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
-const colors=["week0","week1","week2","week3","week4","week5"];
+// ================= ADD / DELETE STAF =================
+function addStaf(){
+    let name = document.getElementById("stafName").value.trim();
+    let gender = document.getElementById("stafGender").value;
+    if(name===""){ alert("Sila masukkan nama staf."); return; }
 
-// ================= INIT =================
+    // Semak duplicate
+    if(staf.find(s=>s.name.toLowerCase()===name.toLowerCase())){
+        alert("Nama staf sudah wujud.");
+        return;
+    }
+
+    staf.push({name:name, gender:gender});
+    document.getElementById("stafName").value="";
+    generateSchedule(); // refresh jadual
+    alert("Staf berjaya ditambah.");
+}
+
+function deleteStaf(){
+    let name = document.getElementById("stafName").value.trim();
+    if(name===""){ alert("Sila masukkan nama staf untuk padam."); return; }
+
+    let idx = staf.findIndex(s=>s.name.toLowerCase()===name.toLowerCase());
+    if(idx===-1){ alert("Staf tidak dijumpai."); return; }
+
+    if(!confirm(`Padam staf "${staf[idx].name}"?`)) return;
+
+    staf.splice(idx,1);
+    document.getElementById("stafName").value="";
+    generateSchedule(); // refresh jadual
+    alert("Staf berjaya dipadam.");
+}
+
+// ================= INIT APP =================
+const bulanNama=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 function initApp(){
     const bulanSel=document.getElementById("bulan");
     bulanSel.innerHTML="";
@@ -198,13 +230,19 @@ function initApp(){
     generateSchedule();
 }
 
-// ================= SHUFFLE =================
+// ================= UTILITY =================
 function shuffle(a){ 
     for(let i=a.length-1;i>0;i--){ 
         let j=Math.floor(Math.random()*(i+1)); 
         [a[i],a[j]]=[a[j],a[i]]; 
     } 
 }
+
+// ================= SCHEDULE =================
+let schedule={};
+let freqHariBiasa={}, freqJumaat={}, freqExtraFriday={}, rotateJumaat=0;
+const hariNama=["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+const colors=["week0","week1","week2","week3","week4","week5"];
 
 // ================= GENERATE SCHEDULE =================
 function generateSchedule(){
@@ -232,8 +270,7 @@ function generateSchedule(){
         let key=`${tahun}-${bulan}-${h.d}`;
         if(h.dow===1) weekNum++;
         let sorted=semua.slice().sort((a,b)=>freqHariBiasa[a]-freqHariBiasa[b]);
-        let selected=[];
-        for(let s of sorted){ if(selected.length>=2) break; selected.push(s); }
+        let selected=[]; for(let s of sorted){ if(selected.length>=2) break; selected.push(s); }
         schedule[key]={y:tahun,m:bulan,d:h.d,day:h.dow,shift:selected.slice(),origShift:selected.slice(),cuti:"",week:weekNum,masa:"1:00 ptg – 2:00 ptg / 5:00 ptg - 5:50 ptg"};
         selected.forEach(s=>freqHariBiasa[s]++);
     }
@@ -254,7 +291,6 @@ function generateSchedule(){
 
     renderSchedule();
 }
-
 // ================= ADD EXTRA FRIDAY =================
 function addExtraFriday(){
     let bulan=parseInt(document.getElementById("bulan").value);
@@ -269,7 +305,6 @@ function addExtraFriday(){
         if(dt.getDay()!==5) continue;
         weekNum++;
 
-        let khamis = new Date(tahun,bulan-1,d-1);
         let khamisKey = `${tahun}-${bulan}-${d-1}`;
         let khamisShift = (schedule[khamisKey] && schedule[khamisKey].shift) ? schedule[khamisKey].shift : [];
 
@@ -298,6 +333,7 @@ function editCuti(key){
     updateFrequencyByDay(key,before,schedule[key].shift);
     renderSchedule();
 }
+
 function updateFrequencyByDay(key, oldList, newList){
     let s = schedule[key];
     if(s.day===5 && !key.includes("extra")){ oldList.forEach(n=>freqJumaat[n]--); newList.forEach(n=>freqJumaat[n]++); return; }
@@ -323,7 +359,7 @@ function renderSchedule(){
     updateFrequencyPanel();
 }
 
-// ================= FREQUENCY =================
+// ================= FREQUENCY PANEL =================
 function updateFrequencyPanel(){
     let f="";
     f+=`<strong>Hari Biasa:</strong><br>`; for(let n in freqHariBiasa){ f+=`${n}: ${freqHariBiasa[n]} kali<br>`; }
@@ -331,7 +367,8 @@ function updateFrequencyPanel(){
     f+=`<br><strong>Jumaat Tambahan:</strong><br>`; for(let n in freqExtraFriday){ f+=`${n}: ${freqExtraFriday[n]} kali<br>`; }
     document.getElementById("frequencyOutput").innerHTML=f;
 }
-// ========== PDF ==========
+
+// ================= PDF =================
 async function downloadPDF(){
     try {
         const tempWrapper = document.createElement("div");
@@ -414,9 +451,6 @@ function resetSchedule(){
     schedule={}; freqHariBiasa={}; freqJumaat={}; freqExtraFriday={};
     renderSchedule();
 }
-
-
 </script>
-
 </body>
 </html>
