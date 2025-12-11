@@ -18,38 +18,99 @@
         header img { height:70px; display:block; margin: 0 auto 10px auto; }
         header h2 { margin:5px 0; font-size:18px; }
         header div { font-size:12px; }
+
         .wrap { max-width:1100px; margin:auto; padding:15px; display:flex; gap:20px; }
         #leftPanel { width:300px; display:flex; flex-direction:column; gap:16px; }
         #rightPanel { flex:1; }
         .card { background:white; color:#000; padding:16px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); font-size:12px; }
+
         input, select { padding:4px; width: calc(100% - 8px); margin-bottom:6px; font-size:12px; }
+
         table { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
         th, td { border:1px solid #ddd; padding:6px; text-align:center; font-size:12px; }
         th { background:#f7f7f7; }
+
         .week0 { background:#e0f7fa; }
         .week1 { background:#e8f5e9; }
         .week2 { background:#fffde7; }
         .week3 { background:#fff3e0; }
         .week4 { background:#fce4ec; }
         .week5 { background:#ede7f6; }
-        .cuti { font-weight:normal; color:#c40000; }
+
+        .cuti { font-weight:bold; color:#c40000; font-size:11px; }
         .extraFriday { background:#e0f7fa; font-size:12px; }
         .femaleFriday { background:#ffcccc; color:#c40000; font-weight:bold; }
+
         .frequency { margin-top:15px; font-weight:bold; font-size:12px; }
-        @media(max-width:900px){ .wrap { flex-direction:column; } #leftPanel { width:100%; } }
+
+        /* ======= Nota - SATU KOTAK JE ======= */
+        #notaCard { margin-top:15px; }
+        #notaCard h3 { margin-bottom:8px; }
+        #notaBox {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            border-radius: 8px;
+            border: 2px solid #4e2a7b;
+            margin-top: 10px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            color: #333;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        #notaBox:focus {
+            outline: none;
+            border-color: #2a1a4d;
+            box-shadow: 0 0 8px rgba(78, 42, 123, 0.3);
+            background: #fff;
+        }
+        #notaBox::placeholder {
+            color: #888;
+            font-style: italic;
+        }
+        .nota-buttons {
+            margin-top: 8px;
+            text-align: right;
+        }
+        .nota-buttons button {
+            padding: 4px 12px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        .nota-buttons .btn-clear {
+            background: #ff4444;
+        }
+        .nota-buttons .btn-save {
+            background: #4e2a7b;
+        }
+
+        @media(max-width:900px){
+            .wrap { flex-direction:column; }
+            #leftPanel { width:100%; }
+            #notaBox { font-size: 14px; min-height: 100px; }
+        }
     </style>
 </head>
-<body>
 
+<body>
+<!-- ================= LOGIN ================= -->
 <div id="loginCard">
     <img src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png">
     <h2>Sistem Shift<br>PERPUSTAKAAN AL-BUKKHARI<br>UiTM CAWANGAN PAHANG</h2>
+
     <input id="username" class="loginInput" type="text" placeholder="Username"><br>
     <input id="password" class="loginInput" type="password" placeholder="Password"><br>
+
     <button onclick="login()">Login</button>
 </div>
 
+<!-- ================= MAIN ================= -->
 <div id="mainContent" style="display:none;">
+
 <header>
     <img src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png">
     <h2>Jadual Shift Perpustakaan</h2>
@@ -57,21 +118,28 @@
 </header>
 
 <div class="wrap">
+
+    <!-- =========== LEFT PANEL =========== -->
     <div id="leftPanel">
+
         <div class="card">
             <button class="secondary" onclick="logout()">Logout</button>
             <button class="secondary" onclick="openChangePassword()">Tukar Password</button>
             <br><br>
+
             <label>Bulan:</label>
             <select id="bulan" style="width:45%"></select>
             <br><br>
+
             <label>Tahun:</label>
             <input id="tahun" type="number" value="2025" style="width:45%" />
             <br><br>
+
             <button onclick="generateSchedule()">Jana</button>
             <button class="secondary" onclick="resetSchedule()">Reset</button>
             <button class="secondary" onclick="downloadPDF()">PDF</button>
             <br><br>
+
             <button class="secondary" onclick="addExtraFriday()">Jana Shift Jumaat Petang</button>
         </div>
 
@@ -90,26 +158,49 @@
             <h3>Kekerapan Staf</h3>
             <div id="frequencyOutput" class="frequency"></div>
         </div>
+
     </div>
 
+    <!-- =========== RIGHT PANEL =========== -->
     <div id="rightPanel">
+
         <div class="card" id="scheduleCard">
             <h3 id="jadualTitle"></h3>
             <div id="scheduleOutput"></div>
+
+            <div class="card" id="notaCard">
+                <h3>📝 Nota Tambahan</h3>
+                <textarea 
+                    id="notaBox" 
+                    placeholder="Tulis nota di sini... (Auto-save & kelihatan dalam PDF)"
+                    maxlength="2000"
+                ></textarea>
+                <div class="nota-buttons">
+                    <button class="secondary btn-clear" onclick="clearNota()" title="Padam semua nota">🗑️ Padam</button>
+                    <button class="btn-save" onclick="saveNota()" title="Simpan nota">💾 Simpan</button>
+                    <span id="notaCharCount" style="font-size:10px; color:#666; margin-left:10px;"></span>
+                </div>
+            </div>
+
         </div>
+
     </div>
+
 </div>
 </div>
 
+<!-- ================= PASSWORD POPUP ================= -->
 <div id="passwordPopup" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6);">
     <div style="background:white; max-width:350px; margin:140px auto; padding:20px; border-radius:10px; text-align:center;">
         <h3>Tukar Password</h3>
         <input id="oldPass" class="loginInput" type="password" placeholder="Password lama"><br>
         <input id="newPass" class="loginInput" type="password" placeholder="Password baru"><br>
+
         <button onclick="changePassword()">Simpan</button>
         <button class="secondary" onclick="closeChangePassword()">Batal</button>
     </div>
 </div>
+
 <script>
 // ================= USERS & LOGIN =================
 if(!localStorage.getItem("users")){
@@ -128,23 +219,42 @@ function login(){
     let p=document.getElementById("password").value.trim();
     let users=getUsers();
     let found=users.find(x=>x.username===u && x.password===p);
-    if(found){ 
-        currentUser=found; 
-        document.getElementById("loginCard").style.display="none"; 
-        document.getElementById("mainContent").style.display="block"; 
-        initApp(); 
-    } else{ 
-        alert("Username atau password salah!"); 
+
+    if(found){
+        currentUser=found;
+        document.getElementById("loginCard").style.display="none";
+        document.getElementById("mainContent").style.display="block";
+
+        initApp();
+        loadNota();
+    } else {
+        alert("Username atau password salah!");
     }
 }
 
-function logout(){ 
-    currentUser=null; 
-    document.getElementById("mainContent").style.display="none"; 
-    document.getElementById("loginCard").style.display="block"; 
-    document.getElementById("username").value=""; 
-    document.getElementById("password").value=""; 
+function logout(){
+    currentUser=null;
+    document.getElementById("mainContent").style.display="none";
+    document.getElementById("loginCard").style.display="block";
+    document.getElementById("username").value="";
+    document.getElementById("password").value="";
 }
+
+// ✅ ENTER KEY AUTO LOGIN - TAMBAH NI
+document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('username').addEventListener('keypress', function(e){
+        if(e.key === 'Enter'){
+            document.getElementById('password').focus();
+        }
+    });
+    
+    document.getElementById('password').addEventListener('keypress', function(e){
+        if(e.key === 'Enter'){
+            login();
+        }
+    });
+});
+
 
 // ================= PASSWORD =================
 function openChangePassword(){ document.getElementById("passwordPopup").style.display="block"; }
@@ -153,33 +263,38 @@ function closeChangePassword(){ document.getElementById("passwordPopup").style.d
 function changePassword(){
     let oldP=document.getElementById("oldPass").value;
     let newP=document.getElementById("newPass").value;
+
     if(!currentUser){ alert("Error"); return; }
     if(oldP!==currentUser.password){ alert("Password lama tidak betul!"); return; }
     if(newP.trim()===""){ alert("Password baru tidak boleh kosong."); return; }
+
     currentUser.password=newP.trim();
+
     let users=getUsers();
     let idx=users.findIndex(x=>x.username===currentUser.username);
     users[idx]=currentUser;
+
     localStorage.setItem("users", JSON.stringify(users));
-    alert("Password berjaya ditukar!"); 
+    alert("Password berjaya ditukar!");
+
     closeChangePassword();
 }
 
-// ================= STAF =================
+// ================= STAF - SUSUNAN A-Z =================
 let staf = [
-    { name:"Roshairi", gender:"M" },
     { name:"Alias", gender:"M" },
+    { name:"Azliza", gender:"F" },
     { name:"Fadhil", gender:"M" },
-    { name:"Saidi", gender:"M" },
+    { name:"Hasmadi", gender:"M" },
+    { name:"Ibrahim", gender:"M" },
     { name:"Khairul Ziad", gender:"M" },
     { name:"Nasir", gender:"M" },
-    { name:"Zainudin", gender:"M" },
-    { name:"Ibrahim", gender:"M" },
-    { name:"Hasmadi", gender:"M" },
+    { name:"Roshairi", gender:"M" },
     { name:"Sabariah", gender:"F" },
-    { name:"Azliza", gender:"F" },
+    { name:"Saidi", gender:"M" },
     { name:"Suhaina", gender:"F" },
     { name:"W.Rozita", gender:"F" },
+    { name:"Zainudin", gender:"M" }
 ];
 
 // ================= ADD / DELETE STAF =================
@@ -188,15 +303,15 @@ function addStaf(){
     let gender = document.getElementById("stafGender").value;
     if(name===""){ alert("Sila masukkan nama staf."); return; }
 
-    // Semak duplicate
     if(staf.find(s=>s.name.toLowerCase()===name.toLowerCase())){
         alert("Nama staf sudah wujud.");
         return;
     }
 
     staf.push({name:name, gender:gender});
+    sortStafAlphabetically();
     document.getElementById("stafName").value="";
-    generateSchedule(); // refresh jadual
+    generateSchedule();
     alert("Staf berjaya ditambah.");
 }
 
@@ -211,42 +326,109 @@ function deleteStaf(){
 
     staf.splice(idx,1);
     document.getElementById("stafName").value="";
-    generateSchedule(); // refresh jadual
+    generateSchedule();
     alert("Staf berjaya dipadam.");
 }
 
-// ================= INIT APP =================
+function sortStafAlphabetically(){
+    staf.sort((a,b) => a.name.localeCompare(b.name, 'ms', {sensitivity: 'base'}));
+}
+
+// ================= INIT =================
 const bulanNama=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
+
 function initApp(){
+    sortStafAlphabetically();
     const bulanSel=document.getElementById("bulan");
     bulanSel.innerHTML="";
-    for(let i=0;i<12;i++){ 
-        let o=document.createElement("option"); 
-        o.value=i+1; 
-        o.textContent=bulanNama[i]; 
-        bulanSel.appendChild(o); 
+
+    for(let i=0;i<12;i++){
+        let o=document.createElement("option");
+        o.value=i+1;
+        o.textContent=bulanNama[i];
+        bulanSel.appendChild(o);
     }
+
     bulanSel.value = new Date().getMonth()+1;
     generateSchedule();
 }
 
-// ================= UTILITY =================
-function shuffle(a){ 
-    for(let i=a.length-1;i>0;i--){ 
-        let j=Math.floor(Math.random()*(i+1)); 
-        [a[i],a[j]]=[a[j],a[i]]; 
-    } 
+// ================= NOTA FUNCTIONS =================
+function loadNota(){
+    const savedNota = localStorage.getItem("notaShift") || "";
+    document.getElementById("notaBox").value = savedNota;
+    updateCharCount();
+    
+    setInterval(autoSaveNota, 3000);
 }
 
-// ================= SCHEDULE =================
+function saveNota(){
+    const nota = document.getElementById("notaBox").value;
+    localStorage.setItem("notaShift", nota);
+    updateCharCount();
+    alert("Nota berjaya disimpan!");
+}
+
+function clearNota(){
+    if(confirm("Padam semua nota?")){
+        document.getElementById("notaBox").value = "";
+        localStorage.removeItem("notaShift");
+        updateCharCount();
+    }
+}
+
+function autoSaveNota(){
+    const notaBox = document.getElementById("notaBox");
+    const currentNota = notaBox.value;
+    const savedNota = localStorage.getItem("notaShift") || "";
+    
+    if(currentNota !== savedNota){
+        localStorage.setItem("notaShift", currentNota);
+    }
+}
+
+function updateCharCount(){
+    const notaBox = document.getElementById("notaBox");
+    const count = notaBox.value.length;
+    document.getElementById("notaCharCount").textContent = `${count}/2000 aksara`;
+    
+    if(count > 1900){
+        document.getElementById("notaCharCount").style.color = "#d32f2f";
+    } else if(count > 1500){
+        document.getElementById("notaCharCount").style.color = "#f57c00";
+    } else {
+        document.getElementById("notaCharCount").style.color = "#666";
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const notaBox = document.getElementById('notaBox');
+    notaBox.addEventListener('input', function() {
+        updateCharCount();
+    });
+});
+
+// ================= UTILITY =================
+function shuffle(a){
+    for(let i=a.length-1;i>0;i--){
+        let j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+    }
+}
+
+// ================= SCHEDULE GENERATOR =================
 let schedule={};
-let freqHariBiasa={}, freqJumaat={}, freqExtraFriday={}, rotateJumaat=0;
+let freqHariBiasa={}, freqJumaatWanita={}, freqExtraFriday={}, rotateJumaat=0;
+
 const hariNama=["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
 const colors=["week0","week1","week2","week3","week4","week5"];
 
-// ================= GENERATE SCHEDULE =================
 function generateSchedule(){
-    schedule={}; rotateJumaat=0; freqHariBiasa={}; freqJumaat={}; freqExtraFriday={};
+    schedule={};
+    rotateJumaat=0;
+    freqHariBiasa={};
+    freqJumaatWanita={};
+    freqExtraFriday={};
 
     let bulan=parseInt(document.getElementById("bulan").value);
     let tahun=parseInt(document.getElementById("tahun").value);
@@ -254,10 +436,11 @@ function generateSchedule(){
 
     let semua = staf.map(s=>s.name);
     semua.forEach(n=>freqHariBiasa[n]=0);
-    staf.filter(s=>s.gender==="F").forEach(w=>freqJumaat[w]=0);
+
+    staf.filter(s=>s.gender==="F").forEach(w=>freqJumaatWanita[w.name]=0);
     staf.forEach(s=>freqExtraFriday[s.name]=0);
 
-    // Hari biasa Isnin-Khamis
+    // Hari biasa (Isnin-Khamis)
     let hariBiasaList=[];
     for(let d=1; d<=lastDay; d++){
         let dt=new Date(tahun,bulan-1,d);
@@ -265,192 +448,325 @@ function generateSchedule(){
     }
 
     shuffle(semua);
+
     let weekNum=0;
     for(let h of hariBiasaList){
         let key=`${tahun}-${bulan}-${h.d}`;
         if(h.dow===1) weekNum++;
+
         let sorted=semua.slice().sort((a,b)=>freqHariBiasa[a]-freqHariBiasa[b]);
-        let selected=[]; for(let s of sorted){ if(selected.length>=2) break; selected.push(s); }
-        schedule[key]={y:tahun,m:bulan,d:h.d,day:h.dow,shift:selected.slice(),origShift:selected.slice(),cuti:"",week:weekNum,masa:"1:00 ptg – 2:00 ptg / 5:00 ptg - 5:50 ptg"};
+        let selected=[];
+
+        for(let s of sorted){
+            if(selected.length>=2) break;
+            selected.push(s);
+        }
+
+        schedule[key]={y:tahun,m:bulan,d:h.d,day:h.dow,shift:selected.slice(),origShift:selected.slice(),cuti:"",week:weekNum,masa:"1:00 ptg – 2:00 ptg / 5:00 ptg - 5:50 ptg", isExtra:false};
         selected.forEach(s=>freqHariBiasa[s]++);
     }
 
-    // Jumaat biasa 1 wanita
+    // Jumaat wanita bergilir - KIRA KERAPATAN WANITA
     let wanita = staf.filter(s=>s.gender==="F").map(s=>s.name);
     shuffle(wanita);
+
     weekNum=0;
     for(let d=1; d<=lastDay; d++){
         let dt=new Date(tahun,bulan-1,d);
+
         if(dt.getDay()!==5) continue;
+
         weekNum++;
-        let w = wanita[rotateJumaat % wanita.length]; rotateJumaat++;
+
+        let w = wanita[rotateJumaat % wanita.length];
+        rotateJumaat++;
+
         let key=`${tahun}-${bulan}-${d}`;
-        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:[w],origShift:[w],cuti:"",week:weekNum,masa:"12:15 tgh – 3:00 ptg"};
-        freqJumaat[w]++;
+        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:[w],origShift:[w],cuti:"",week:weekNum,masa:"12:15 tgh – 3:00 ptg", isExtra:false};
+
+        freqJumaatWanita[w]++;
     }
 
     renderSchedule();
 }
-// ================= ADD EXTRA FRIDAY =================
+
+// ================= EXTRA FRIDAY - DI ATAS JUMAAT WANITA =================
 function addExtraFriday(){
     let bulan=parseInt(document.getElementById("bulan").value);
     let tahun=parseInt(document.getElementById("tahun").value);
     let lastDay=new Date(tahun,bulan,0).getDate();
 
-    let weekNum=0;
     let semua = staf.map(s=>s.name);
+    let weekNum=0;
 
     for(let d=1; d<=lastDay; d++){
         let dt=new Date(tahun,bulan-1,d);
+
         if(dt.getDay()!==5) continue;
         weekNum++;
 
-        let khamisKey = `${tahun}-${bulan}-${d-1}`;
-        let khamisShift = (schedule[khamisKey] && schedule[khamisKey].shift) ? schedule[khamisKey].shift : [];
+        let khamisKey=`${tahun}-${bulan}-${d-1}`;
+        let khamisShift=(schedule[khamisKey] && schedule[khamisKey].shift)? schedule[khamisKey].shift : [];
 
-        // Pilih 2 staf untuk extra Friday tanpa ulang staf dari Khamis
         let calon = semua.filter(n=>!khamisShift.includes(n));
+
         calon.sort((a,b)=>freqExtraFriday[a]-freqExtraFriday[b]);
+
         let selected = calon.slice(0,2);
         selected.forEach(s=>freqExtraFriday[s]++);
 
         let key=`${tahun}-${bulan}-${d}-extra`;
-        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:selected,origShift:selected.slice(),cuti:"",week:weekNum,masa:"2:45 ptg – 5:50 ptg"};
+        schedule[key]={y:tahun,m:bulan,d:d,day:5,shift:selected,origShift:selected.slice(),cuti:"",week:weekNum,masa:"2:45 ptg – 5:50 ptg", isExtra:true};
     }
 
     renderSchedule();
 }
 
-// ================= EDIT CUTI =================
+// ================= CUTI =================
 function editCuti(key){
     let text=prompt("Masukkan cuti (kosong untuk batal):",schedule[key].cuti||"");
     if(text===null) return;
+
     let trimmed=text.trim();
     let before = schedule[key].shift.slice();
+
     schedule[key].cuti=trimmed;
-    if(trimmed){ schedule[key].shift=[]; } 
-    else { schedule[key].shift=schedule[key].origShift.slice(); }
+
+    if(trimmed){
+        schedule[key].shift=[];
+    } else {
+        schedule[key].shift=schedule[key].origShift.slice();
+    }
+
     updateFrequencyByDay(key,before,schedule[key].shift);
     renderSchedule();
 }
 
 function updateFrequencyByDay(key, oldList, newList){
     let s = schedule[key];
-    if(s.day===5 && !key.includes("extra")){ oldList.forEach(n=>freqJumaat[n]--); newList.forEach(n=>freqJumaat[n]++); return; }
-    if(s.day===5 && key.includes("extra")){ oldList.forEach(n=>freqExtraFriday[n]--); newList.forEach(n=>freqExtraFriday[n]++); return; }
-    oldList.forEach(n=>freqHariBiasa[n]--); newList.forEach(n=>freqHariBiasa[n]++);
+
+    if(s.day===5 && !s.isExtra){
+        oldList.forEach(n=>freqJumaatWanita[n]--);
+        newList.forEach(n=>freqJumaatWanita[n]++);
+        return;
+    }
+
+    if(s.isExtra){
+        oldList.forEach(n=>freqExtraFriday[n]--);
+        newList.forEach(n=>freqExtraFriday[n]++);
+        return;
+    }
+
+    oldList.forEach(n=>freqHariBiasa[n]--);
+    newList.forEach(n=>freqHariBiasa[n]++);
 }
 
 // ================= RENDER SCHEDULE =================
 function renderSchedule(){
-    let keys=Object.keys(schedule).sort((a,b)=>schedule[a].d - schedule[b].d);
-    let html=`<table><tr><th>Hari / Tarikh</th><th>Shift</th><th>Nama Staf</th></tr>`;
-    keys.forEach(k=>{
-        let s=schedule[k];
-        let bgClass=colors[s.week%colors.length];
-        let extraClass="", styleTxt="";
-        if(k.includes("extra")) extraClass="extraFriday";
-        if(s.day===5 && !k.includes("extra")) extraClass="femaleFriday";
-        let show = s.cuti ? `<span class='cuti'>${s.cuti}</span>` : s.shift.join(" & ");
-        html+=`<tr class="${bgClass} ${extraClass}"><td>${hariNama[s.day]} (${s.d}/${s.m}/${s.y})</td><td>${s.masa}</td><td style="cursor:pointer;${styleTxt}" onclick="editCuti('${k}')">${show}</td></tr>`;
+    // Kumpul semua keys dan susun MENGGUNAKAN LOGIK BARU
+    let allEntries = [];
+    
+    Object.keys(schedule).forEach(k => {
+        allEntries.push({key: k, data: schedule[k]});
     });
+
+    // SORTING - JUMAAT EXTRA PERTAMA, kemudian JUMAAT WANITA
+    allEntries.sort((a, b) => {
+        let sa = a.data, sb = b.data;
+        
+        // Susun mengikut tarikh dahulu
+        if(sa.d !== sb.d) return sa.d - sb.d;
+        
+        // JUMAAT EXTRA (isExtra=true) HARUS DI ATAS JUMAAT WANITA
+        if(sa.isExtra && !sb.isExtra && sb.day === 5) return -1;  // Extra atas
+        if(!sa.isExtra && sb.isExtra && sa.day === 5) return 1;   // Extra atas
+        
+        return 0;
+    });
+
+    let html=`<table>
+    <tr><th>Hari / Tarikh</th><th>Shift</th><th>Nama Staf</th></tr>`;
+
+    allEntries.forEach(entry => {
+        let k = entry.key;
+        let s = entry.data;
+
+        let bgClass=colors[s.week % colors.length];
+        let extraClass="";
+
+        if(s.isExtra) {
+            extraClass="extraFriday";
+        } else if(s.day===5) {
+            extraClass="femaleFriday";
+        }
+
+        let show = s.cuti ? `<span class='cuti'>${s.cuti}</span>` : s.shift.join(" & ");
+
+        html+=`
+        <tr class="${bgClass} ${extraClass}">
+            <td>${hariNama[s.day]} (${s.d}/${s.m}/${s.y})</td>
+            <td>${s.masa}</td>
+            <td style="cursor:pointer;" onclick="editCuti('${k}')">${show}</td>
+        </tr>`;
+    });
+
     html+=`</table>`;
     document.getElementById("scheduleOutput").innerHTML=html;
+
     updateFrequencyPanel();
 }
 
 // ================= FREQUENCY PANEL =================
 function updateFrequencyPanel(){
-    let f="";
-    f+=`<strong>Hari Biasa:</strong><br>`; for(let n in freqHariBiasa){ f+=`${n}: ${freqHariBiasa[n]} kali<br>`; }
-    f+=`<br><strong>Jumaat Biasa (Wanita):</strong><br>`; for(let n in freqJumaat){ f+=`${n}: ${freqJumaat[n]} kali<br>`; }
-    f+=`<br><strong>Jumaat Tambahan:</strong><br>`; for(let n in freqExtraFriday){ f+=`${n}: ${freqExtraFriday[n]} kali<br>`; }
-    document.getElementById("frequencyOutput").innerHTML=f;
+    let f = `
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            font-size:11px;
+            background:white;
+            color:#000;
+            border:2px solid #000;
+        ">
+            <tr>
+                <th style="border:1px solid #000; padding:4px; background:#f2f2f2;">Nama</th>
+                <th style="border:1px solid #000; padding:4px; background:#f2f2f2;">Hari Biasa</th>
+                <th style="border:1px solid #000; padding:4px; background:#f2f2f2;">Jumaat Wanita</th>
+                <th style="border:1px solid #000; padding:4px; background:#f2f2f2;">Jumaat Extra</th>
+            </tr>
+    `;
+
+    let allNames = staf.map(s => s.name).sort();
+
+    allNames.forEach(n => {
+        f += `
+            <tr>
+                <td style="border:1px solid #000; padding:4px;">${n}</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">${freqHariBiasa[n] ?? 0}</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">${freqJumaatWanita[n] ?? 0}</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">${freqExtraFriday[n] ?? 0}</td>
+            </tr>
+        `;
+    });
+
+    f += `</table>`;
+
+    document.getElementById("frequencyOutput").innerHTML = f;
 }
 
-// ================= PDF =================
+// ==================================================
+// ===================== PDF ========================
+// ==================================================
 async function downloadPDF(){
     try {
+        const nota = document.getElementById("notaBox").value;
+        localStorage.setItem("notaShift", nota);
+
         const tempWrapper = document.createElement("div");
         tempWrapper.style.width="800px";
         tempWrapper.style.margin="0 auto";
         tempWrapper.style.padding="15px";
         tempWrapper.style.background="#fff";
         tempWrapper.style.color="#000";
-        tempWrapper.style.fontFamily="Arial, sans-serif";
+        tempWrapper.style.fontFamily="Arial";
         tempWrapper.style.fontSize="12px";
         tempWrapper.style.textAlign="center";
 
-        // Header
         const logo = document.createElement("img");
         logo.src="https://www.teamcetak.com/wp-content/uploads/2019/03/uitm-universiti-teknologi-mara-logo-png-transparent.png";
         logo.style.height="80px";
-        logo.style.display="block";
         logo.style.margin="0 auto 10px auto";
         tempWrapper.appendChild(logo);
 
-        const bulan = bulanNama[document.getElementById("bulan").value-1];
+        const bulanSel = document.getElementById("bulan");
         const tahun = document.getElementById("tahun").value;
+        const bulan = bulanNama[bulanSel.value-1];
 
         const title1 = document.createElement("div");
+        title1.innerText=`Jadual Shift & OT - ${bulan} ${tahun}`;
         title1.style.fontWeight="bold";
         title1.style.fontSize="16px";
         title1.style.marginBottom="5px";
-        title1.innerText=`Jadual Shift & OT - ${bulan} ${tahun}`;
         tempWrapper.appendChild(title1);
 
         const title2 = document.createElement("div");
-        title2.style.fontSize="14px";
-        title2.style.marginBottom="20px";
         title2.innerText="Waktu Kerja Normal : 8:00 pg - 5.00 ptg | Waktu Rehat Shift : 2:00 ptg - 3.00 ptg";
+        title2.style.marginBottom="20px";
         tempWrapper.appendChild(title2);
 
-        // Table wrapper
-        const shiftWrapper = document.createElement("div");
-        shiftWrapper.style.width="100%";
-        shiftWrapper.style.display="inline-block";
-        shiftWrapper.innerHTML=document.getElementById("scheduleOutput").innerHTML;
+        const wrap2=document.createElement("div");
+        wrap2.style.width="100%";
+        wrap2.innerHTML=document.getElementById("scheduleOutput").innerHTML;
 
-        shiftWrapper.querySelectorAll("table").forEach(t=>{
+        wrap2.querySelectorAll("table").forEach(t=>{
             t.style.width="90%";
             t.style.margin="0 auto";
             t.style.borderCollapse="collapse";
-            t.querySelectorAll("th, td").forEach(td=>{
-                td.style.padding="5px 10px";
+            t.querySelectorAll("th,td").forEach(td=>{
                 td.style.border="1px solid #000";
-                td.style.fontSize="12px";
+                td.style.padding="4px";
             });
         });
 
-        tempWrapper.appendChild(shiftWrapper);
+        tempWrapper.appendChild(wrap2);
+
+        if(nota.trim() !== ""){
+            const notaSection=document.createElement("div");
+            notaSection.style.marginTop="25px";
+            notaSection.style.textAlign="left";
+            notaSection.style.width="90%";
+            notaSection.style.marginLeft="auto";
+            notaSection.style.marginRight="auto";
+            
+            notaSection.innerHTML = `
+                <div style="font-weight:bold; font-size:14px; margin-bottom:10px; color:#000000;">Nota :</div>
+                <div style="padding:12px; font-size:12px; line-height:1.5;">${nota.replace(/\n/g,"<br>")}</div>
+            `;
+
+            tempWrapper.appendChild(notaSection);
+        }
 
         document.body.appendChild(tempWrapper);
-        await html2canvas(tempWrapper, { scale:2 }).then(canvas=>{
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jspdf.jsPDF("p","pt","a4");
+
+        await html2canvas(tempWrapper,{ 
+            scale:2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+        }).then(canvas=>{
+            const imgData=canvas.toDataURL("image/png");
+            const pdf=new jspdf.jsPDF("p","pt","a4");
+
             const pdfW = pdf.internal.pageSize.getWidth();
             const pdfH = pdf.internal.pageSize.getHeight();
-            const imgW = canvas.width;
-            const imgH = canvas.height;
-            const ratio = Math.min(pdfW/imgW, pdfH/imgH);
-            const w = imgW*ratio;
-            const h = imgH*ratio;
-            pdf.addImage(imgData,"PNG", (pdfW-w)/2,20, w,h);
+            const ratio = Math.min(pdfW/canvas.width, pdfH/canvas.height);
+
+            const w = canvas.width * ratio;
+            const h = canvas.height * ratio;
+
+            pdf.addImage(imgData,"PNG",(pdfW-w)/2,20,w,h);
             pdf.save(`Jadual_Shift_${bulan}_${tahun}.pdf`);
         });
+
         document.body.removeChild(tempWrapper);
-    } catch(e){ 
-        alert("Terjadi masalah semasa generate PDF. Sila cuba semula"); 
+
+    } catch(e){
+        alert("Ralat semasa menghasilkan PDF.");
         console.error(e);
     }
 }
 
-// ================= RESET SCHEDULE =================
+// ================= RESET =================
 function resetSchedule(){
     if(!confirm("Betul nak reset jadual?")) return;
-    schedule={}; freqHariBiasa={}; freqJumaat={}; freqExtraFriday={};
+
+    schedule={};
+    freqHariBiasa={};
+    freqJumaatWanita={};
+    freqExtraFriday={};
+
     renderSchedule();
 }
 </script>
+
 </body>
 </html>
